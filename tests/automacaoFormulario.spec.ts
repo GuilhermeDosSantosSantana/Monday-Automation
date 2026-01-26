@@ -1,61 +1,58 @@
 import { test, expect } from '@playwright/test';
 import { MondayFormPage } from '../Pages/MondayFormPage';
 
-// Link atualizado
 const MONDAY_FORM_URL = 'https://forms.monday.com/forms/8d6e8cfff35e79c54898387c3c4cf4d9?r=use1';
-// Senha fornecida
 const FORM_PASSWORD = 'FABRICASTIGMA17';
 
-test.describe('Automação de Formulário Monday.com', () => {
+// Rótulos exatos do formulário
+const LABEL_ORIGEM = 'Ferramenta';
+const LABEL_STATUS = 'Status';
+const LABEL_PRIORIDADE = 'Prioridade';
+
+test.describe('Automação Monday - Validação Completa', () => {
     let mondayPage: MondayFormPage;
 
     test.beforeEach(async ({ page }) => {
         mondayPage = new MondayFormPage(page);
     });
 
-    test('Deve autenticar, preencher e enviar o formulário', async () => {
-        // 1. Navegar
-        console.log(`Navegando para: ${MONDAY_FORM_URL}`);
+    test('Preenchimento Completo: Dados + Dropdowns + Cronograma', async ({ page }) => {
+        // 1. Navegar e Autenticar
         await mondayPage.navigate(MONDAY_FORM_URL);
+        await mondayPage.handlePasswordProtection(FORM_PASSWORD);
+        
+        console.log('⏳ Aguardando formulário...');
+        await page.waitForTimeout(3000);
 
-        // 2. Autenticação (Lógica de Password)
-        // O Playwright verifica se existe um input de senha visível.
-        // Se o formulário pedir senha, preenchemos e avançamos.
-        const passwordInput = mondayPage.page.locator('input[type="password"]');
-        
-        // Timeout curto de 5s para verificar a senha, para não travar o teste se não tiver senha
-        if (await passwordInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-            console.log('🔒 Tela de senha detectada. Autenticando...');
-            await passwordInput.fill(FORM_PASSWORD);
-            
-            // Clica no botão de avançar/entrar (geralmente "Next" ou "Próximo")
-            // Usamos um seletor genérico para pegar o botão visível nesta etapa
-            await mondayPage.page.locator('button').filter({ hasText: /Next|Próximo|Enter|Entrar|Check/i }).first().click();
-            
-            // Aguarda a transição da tela de senha para o formulário real
-            await mondayPage.page.waitForLoadState('networkidle');
-        } else {
-            console.log('🔓 Nenhuma tela de senha detectada, prosseguindo...');
-        }
+        // 2. Preencher Nome
+        const inputNome = page.locator('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])').filter({ hasText: '' }).first();
+        await expect(inputNome).toBeVisible();
+        await inputNome.click();
+        await inputNome.type('Lead Com Datas', { delay: 50 });
 
-        // 3. Preencher Campos
-        // ⚠️ PONTO DE ATENÇÃO:
-        // Como você mudou o link, é possível que os NOMES das perguntas (Labels) também tenham mudado.
-        // Se o teste falhar dizendo que não encontrou "Nome", verifique como está escrito no formulário real.
-        
-        await mondayPage.fillInputByLabel('Nome', 'Teste Automatizado Playwright');
-        
-        await mondayPage.fillInputByLabel('E-mail', 'teste@exemplo.com.br');
-        
-        await mondayPage.fillInputByLabel('Telefone', '11999999999');
-        
-        // Verifique se este campo ainda existe no novo formulário
-        await mondayPage.fillInputByLabel('Empresa', 'Empresa Fictícia LTDA');
+        // 3. Dropdowns
+        await mondayPage.selectOptionBySearch(LABEL_ORIGEM, 'CPC');
+        await mondayPage.selectOptionBySearch(LABEL_STATUS, 'Não iniciado');
+        await mondayPage.selectOptionBySearch(LABEL_PRIORIDADE, 'Baixo');
 
-        // 4. Enviar
-        await mondayPage.submit();
+        // 4. Preencher Datas (Timeline)
+        // Gera datas dinâmicas para o mês atual (ano-mês-26 e ano-mês-30)
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        // Adiciona +1 ao mês porque janeiro é 0 no JS, e padStart garante formato "05" em vez de "5"
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0'); 
+        
+        const dataInicio = `${ano}-${mes}-26`;
+        const dataFim = `${ano}-${mes}-30`;
 
-        // 5. Validar
-        await mondayPage.assertSubmissionSuccess();
+        await mondayPage.fillTimeline(dataInicio, dataFim);
+
+        // 5. Enviar (Descomente para enviar de verdade)
+        // await mondayPage.submit();
+        // await mondayPage.assertSubmissionSuccess();
+
+        console.log('✅ Teste finalizado. Datas preenchidas.');
+        
+        await page.pause(); 
     });
 });
