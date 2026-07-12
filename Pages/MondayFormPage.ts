@@ -7,7 +7,6 @@ export class MondayFormPage {
 
     constructor(page: Page) {
         this.page = page;
-        // Botão de envio robusto
         this.submitButton = page.locator('button[type="submit"], [data-testid="submit-form-button"], [data-testid="submit-button"]').first();
         this.successMessage = page.locator('text=Obrigado|Thank you|Sucesso|recebemos');
     }
@@ -21,7 +20,7 @@ export class MondayFormPage {
         const passwordInput = this.page.locator('[data-testid="password-input-password"], input[type="password"]').first();
         
         if (await passwordInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-            console.log('🔒 Tela de senha detectada. Tentando autenticar...');
+            console.log('Tela de senha detectada. Autenticando com credencial local.');
             await passwordInput.click();
             await passwordInput.fill(password);
             
@@ -54,17 +53,13 @@ export class MondayFormPage {
     }
 
     /**
-     * Preenche campos de data (Timeline/Cronograma).
-     * Usa seletores genéricos que terminam com "-start-date" e "-end-date"
-     * para funcionar mesmo que o ID da coluna (timeline6) mude.
+     * Preenche campos de data de timeline usando seletores por sufixo de data-testid.
      * @param startDate Data de início (YYYY-MM-DD)
      * @param endDate Data de fim (YYYY-MM-DD)
      */
     async fillTimeline(startDate: string, endDate: string) {
-        console.log(`📅 Preenchendo Cronograma: ${startDate} até ${endDate}...`);
+        console.log(`Preenchendo Cronograma: ${startDate} até ${endDate}...`);
         
-        // Seletores CSS que buscam pelo sufixo do atributo data-testid
-        // Isso pega 'text-field_timeline6-start-date', 'text-field_timeline1-start-date', etc.
         const startInput = this.page.locator('[data-testid$="-start-date"]').first();
         const endInput = this.page.locator('[data-testid$="-end-date"]').first();
 
@@ -72,31 +67,31 @@ export class MondayFormPage {
             await startInput.fill(startDate);
             await endInput.fill(endDate);
         } else {
-            throw new Error('❌ Campos de data (Timeline) não encontrados.');
+            throw new Error('Campos de data (Timeline) não encontrados.');
         }
     }
 
     async selectOptionBySearch(label: string, searchText: string) {
-        console.log(`🔍 [COMBOBOX] Selecionando "${searchText}" em "${label}"...`);
+        console.log(`Selecionando "${searchText}" em "${label}"...`);
 
         const combobox = this.page.getByRole('combobox', { name: label, exact: false });
 
         if (!(await combobox.isVisible())) {
-            throw new Error(`❌ Combobox com nome "${label}" não encontrado.`);
+            throw new Error(`Combobox com nome "${label}" não encontrado.`);
         }
 
         await combobox.click();
         
-        console.log(`⌨️ Digitando "${searchText}"...`);
+        console.log(`Digitando "${searchText}"...`);
         await combobox.fill(searchText);
         await this.page.waitForTimeout(1000);
 
-        console.log('⬇️ Selecionando item...');
+        console.log('Selecionando item...');
         await combobox.press('ArrowDown');
         await this.page.waitForTimeout(300);
         await combobox.press('Enter');
 
-        console.log('🖱️ Limpando foco...');
+        console.log('Limpando foco...');
         await this.page.mouse.click(10, 10);
         await this.page.waitForTimeout(500);
     }

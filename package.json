@@ -1,5 +1,5 @@
 {
-  "name": "poc-petr4",
+  "name": "monday-form-automation",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -11,9 +11,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Playwright E2E automation for Monday.com forms with sanitized environment configuration.",
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@types/node": "^25.0.9"
+    "@types/node": "^25.0.9",
+    "typescript": "^7.0.2"
   }
 }
